@@ -1,0 +1,12 @@
+CREATE TABLE IF NOT EXISTS academic_sections (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  owner_user_id INT NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_academic_sections_owner_name (owner_user_id, name),
+  CONSTRAINT fk_academic_sections_owner
+    FOREIGN KEY (owner_user_id) REFERENCES users (id)
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

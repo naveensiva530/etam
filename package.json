@@ -1,0 +1,25 @@
+{
+  "name": "project-name",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace=apps/web",
+    "dev:mobile": "npm run start --workspace=apps/mobile",
+    "dev:api": "npm run dev --workspace=apps/api"
+  },
+  "overrides": {
+    "@heroui/react": "2.6.14",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7"
+  },
+  "devDependencies": {
+    "framer-motion": "^14.3.0",
+    "tailwindcss": "^3.4.17"
+  }
+}

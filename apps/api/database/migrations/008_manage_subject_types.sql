@@ -1,0 +1,18 @@
+CREATE TABLE IF NOT EXISTS subject_types (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  owner_user_id INT NOT NULL,
+  name VARCHAR(50) NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_subject_types_owner_name (owner_user_id, name),
+  CONSTRAINT fk_subject_types_owner
+    FOREIGN KEY (owner_user_id) REFERENCES users (id)
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+ALTER TABLE subject_master
+  MODIFY COLUMN type VARCHAR(50) NOT NULL DEFAULT 'Core';
+
+ALTER TABLE academic_subject_allocations
+  MODIFY COLUMN subject_type VARCHAR(50) NOT NULL DEFAULT 'Core';

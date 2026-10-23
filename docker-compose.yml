@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+    ports:
+      - '80:80'
+    depends_on:
+      - api
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=${DB_USER:-etam_app}
+      - DB_PASSWORD=${DB_PASSWORD:?Set DB_PASSWORD before hosting}
+      - DB_NAME=${DB_NAME:-etam_attendance_db}
+      - DB_CREATE_IF_MISSING=true
+      - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET to a long random secret before hosting}
+      - REDIS_HOST=redis
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  mysql:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD before hosting}
+      MYSQL_USER: ${DB_USER:-etam_app}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD before hosting}
+      MYSQL_DATABASE: ${DB_NAME:-etam_attendance_db}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD-SHELL', 'mysqladmin ping -h localhost -p$$MYSQL_ROOT_PASSWORD --silent']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:alpine
+
+volumes:
+  mysql_data:

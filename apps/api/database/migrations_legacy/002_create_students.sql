@@ -1,0 +1,23 @@
+CREATE TABLE IF NOT EXISTS students (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  admission_id VARCHAR(64) NOT NULL,
+  student_id VARCHAR(64) NOT NULL,
+  student_name VARCHAR(100) NOT NULL,
+  institution ENUM('School', 'College', 'Training') NOT NULL,
+  department VARCHAR(150) NOT NULL,
+  academic_year VARCHAR(20) NOT NULL,
+  gender ENUM('Male', 'Female', 'Other') NOT NULL,
+  photo_url MEDIUMTEXT NULL,
+  date_of_joining DATE NOT NULL,
+  parent_name VARCHAR(100) NULL,
+  parent_mobile VARCHAR(20) NULL,
+  student_mobile VARCHAR(20) NULL,
+  dob DATE NULL,
+  blood_group ENUM('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-') NULL,
+  status ENUM('Active', 'Pending', 'Archived') NOT NULL DEFAULT 'Active',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_students_institution_admission (institution, admission_id),
+  UNIQUE KEY uq_students_institution_student_id (institution, student_id),
+  KEY idx_students_institution_created (institution, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
