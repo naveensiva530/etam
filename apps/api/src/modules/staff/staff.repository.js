@@ -3,8 +3,13 @@ const pool = require('../../config/db');
 // ── Column list used for INSERT / UPDATE (never includes id, owner_user_id, created_at, deleted_at) ──
 const columns = [
   'staff_id', 'name', 'role', 'institution', 'staff_type', 'department',
-  'qualification', 'photo_url', 'email', 'mobile', 'date_of_joining', 'blood_group', 'status',
+  'teaching_scope', 'qualification', 'photo_url', 'email', 'mobile', 'date_of_joining', 'blood_group', 'status',
 ];
+
+const parseTeachingScope = (value) => {
+  if (!value) return undefined;
+  return typeof value === 'string' ? JSON.parse(value) : value;
+};
 
 const toValues = (staff) => [
   staff.staffId,
@@ -13,6 +18,7 @@ const toValues = (staff) => [
   staff.institution,
   staff.staffType,
   staff.department || null,
+  staff.teachingScope ? JSON.stringify(staff.teachingScope) : null,
   staff.qualification,
   staff.photoUrl || null,
   staff.email,
@@ -23,23 +29,24 @@ const toValues = (staff) => [
 ];
 
 const mapStaff = (row) => ({
-  id:            String(row.id),
-  staffId:       row.staff_id,
-  name:          row.name,
-  role:          row.role,
-  institution:   row.institution,
-  staffType:     row.staff_type || undefined,
-  department:    row.department || undefined,
+  id: String(row.id),
+  staffId: row.staff_id,
+  name: row.name,
+  role: row.role,
+  institution: row.institution,
+  staffType: row.staff_type || undefined,
+  department: row.department || undefined,
+  teachingScope: parseTeachingScope(row.teaching_scope),
   qualification: row.qualification,
-  photoUrl:      row.photo_url || undefined,
-  email:         row.email,
-  mobile:        row.mobile,
+  photoUrl: row.photo_url || undefined,
+  email: row.email,
+  mobile: row.mobile,
   dateOfJoining: row.date_of_joining instanceof Date
     ? row.date_of_joining.toISOString().slice(0, 10)
     : String(row.date_of_joining).slice(0, 10),
-  bloodGroup:    row.blood_group || undefined,
-  status:        row.status,
-  createdAt:     row.created_at instanceof Date
+  bloodGroup: row.blood_group || undefined,
+  status: row.status,
+  createdAt: row.created_at instanceof Date
     ? row.created_at.toISOString()
     : new Date(row.created_at).toISOString(),
 });
@@ -223,4 +230,23 @@ exports.saveRoles = async (userId, institution, roles) => {
     [userId, institution, JSON.stringify(roles)],
   );
   return roles;
+};
+
+exports.getSkills = async (userId, institution) => {
+  const [rows] = await pool.execute(
+    'SELECT skills FROM staff_skill_options WHERE owner_user_id = ? AND institution = ?',
+    [userId, institution],
+  );
+  if (!rows[0]) return null;
+  return typeof rows[0].skills === 'string' ? JSON.parse(rows[0].skills) : rows[0].skills;
+};
+
+exports.saveSkills = async (userId, institution, skills) => {
+  await pool.execute(
+    `INSERT INTO staff_skill_options (owner_user_id, institution, skills)
+     VALUES (?, ?, ?)
+     ON DUPLICATE KEY UPDATE skills = VALUES(skills)`,
+    [userId, institution, JSON.stringify(skills)],
+  );
+  return skills;
 };

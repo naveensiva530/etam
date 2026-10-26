@@ -73,7 +73,7 @@ export const TimetableDepartmentList: React.FC<TimetableDepartmentListProps> = (
             <Users className="w-4.5 h-4.5" />
           </div>
           <div>
-            <p className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 leading-tight">Total Department</p>
+            <p className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 leading-tight">Total Active Classes</p>
             <p className="text-2xl font-extrabold font-mono tracking-tight text-zinc-900 dark:text-zinc-100 leading-tight mt-0.5">
               {String(departments.length).padStart(2, '0')}
             </p>
@@ -114,7 +114,7 @@ export const TimetableDepartmentList: React.FC<TimetableDepartmentListProps> = (
                 <Table.Column>
                   <button type="button" onClick={() => handleSort('departmentId')} className="inline-flex items-center gap-1.5 hover:text-zinc-900 dark:hover:text-zinc-200">
                   <div className="flex items-center gap-1.5">
-                    <span>Department ID</span>
+                    <span>Class ID</span>
                     {sortField === 'departmentId' &&
                       (sortOrder === 'asc' ? (
                         <ChevronUp className="w-3.5 h-3.5" />
@@ -126,7 +126,7 @@ export const TimetableDepartmentList: React.FC<TimetableDepartmentListProps> = (
                 </Table.Column>
                 <Table.Column>
                   <button type="button" onClick={() => handleSort('departmentName')} className="inline-flex items-center gap-1.5 hover:text-zinc-900 dark:hover:text-zinc-200">
-                    <span>Department Name</span>
+                    <span>Class Name</span>
                     {sortField === 'departmentName' &&
                       (sortOrder === 'asc' ? (
                         <ChevronUp className="w-3.5 h-3.5" />

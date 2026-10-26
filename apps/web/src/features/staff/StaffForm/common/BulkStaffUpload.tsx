@@ -16,6 +16,47 @@ interface BulkStaffUploadProps {
   onClose: () => void;
 }
 
+function parseCsvLine(line: string): string[] {
+  const values: string[] = [];
+  let value = '';
+  let inQuotes = false;
+
+  for (let index = 0; index < line.length; index += 1) {
+    const character = line[index];
+    if (character === '"') {
+      if (inQuotes && line[index + 1] === '"') {
+        value += '"';
+        index += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (character === ',' && !inQuotes) {
+      values.push(value.trim());
+      value = '';
+    } else {
+      value += character;
+    }
+  }
+
+  values.push(value.trim());
+  return values;
+}
+
+function parseList(value: string | undefined): string[] {
+  return value ? value.split(';').map((item) => item.trim()).filter(Boolean) : [];
+}
+
+function getScopeSummary(scope: StaffInput['teachingScope']): string {
+  if (!scope) return '';
+  if (scope.institution === 'School') {
+    return [scope.teachingWing, ...scope.eligibleClasses, ...scope.skillTags].filter(Boolean).join(' • ');
+  }
+  if (scope.institution === 'College') {
+    return [scope.department, ...scope.teachingYears, ...scope.specializations].filter(Boolean).join(' • ');
+  }
+  return [scope.track, ...scope.activeBatches, ...scope.modules].filter(Boolean).join(' • ');
+}
+
 export const BulkStaffUpload: React.FC<BulkStaffUploadProps> = ({
   existingStaffIds,
   onSaveBulkStaff,
@@ -41,6 +82,25 @@ export const BulkStaffUpload: React.FC<BulkStaffUploadProps> = ({
       'Status',
     ];
 
+    const scopeHeaders: Record<typeof institutionType, string[]> = {
+      School: ['Teaching Wing', 'Eligible Classes (semicolon-separated)', 'Skill Tags (semicolon-separated)', 'Class Teacher Eligible (true/false)'],
+      College: ['Teaching Department', 'Teaching Years (semicolon-separated)', 'Specializations (semicolon-separated)'],
+      Training: ['Track / Domain', 'Active Batches (semicolon-separated)', 'Modules / Topics (semicolon-separated)'],
+    };
+    const scopeSamples: Record<typeof institutionType, string[][]> = {
+      School: [
+        ['Primary Wing (Class 1 - 5)', 'Class 1;Class 2;Class 3', 'Mathematics;Tamil', 'true'],
+        ['', '', '', ''],
+      ],
+      College: [
+        ['Department of Computer Science', '1st Year;2nd Year;3rd Year', 'Data Structures;AI/ML'],
+        ['', '', ''],
+      ],
+      Training: [
+        ['Full Stack Web Development (Batch 26)', 'MERN Cohort 12;Weekend FastTrack', 'React;TypeScript;Docker'],
+        ['', '', ''],
+      ],
+    };
     const samples: Record<typeof institutionType, string[][]> = {
       School: [
         ['STF-2026-001', 'Dr. Rajesh Raman', 'Senior Teacher', 'Teaching', 'M.Sc, B.Ed', 'rajesh.r@school.edu', '9876501234', '2026-01-10', 'Active'],
@@ -57,8 +117,10 @@ export const BulkStaffUpload: React.FC<BulkStaffUploadProps> = ({
     };
 
     const content = [
-      headers.join(','),
-      ...samples[institutionType].map((row) => row.map((value) => `"${value}"`).join(',')),
+      [...headers, ...scopeHeaders[institutionType]].map((value) => `"${value}"`).join(','),
+      ...samples[institutionType].map((row, index) =>
+        [...row, ...scopeSamples[institutionType][index]].map((value) => `"${value.replace(/"/g, '""')}"`).join(','),
+      ),
     ].join('\n');
 
     const link = document.createElement('a');
@@ -88,8 +150,7 @@ export const BulkStaffUpload: React.FC<BulkStaffUploadProps> = ({
 
       const today = new Date().toISOString().slice(0, 10);
       const parsedRows = lines.slice(1).map((line, index): BulkStaffRow => {
-        const raw = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || line.split(',');
-        const values = raw.map((value) => value.replace(/^"|"$/g, '').trim());
+        const values = parseCsvLine(line);
         const [
           staffId = '',
           name = '',
@@ -103,6 +164,44 @@ export const BulkStaffUpload: React.FC<BulkStaffUploadProps> = ({
         ] = values;
 
         const rowErrors: string[] = [];
+        const scopeValues = values.slice(9);
+        const hasScopeValues = scopeValues.some((value) => value.trim() !== '');
+        let teachingScope: StaffInput['teachingScope'];
+        let department: string | undefined;
+
+        if (hasScopeValues && institutionType === 'School') {
+          const [teachingWing = '', eligibleClasses = '', skillTags = '', classTeacherEligible = ''] = scopeValues;
+          const normalizedEligibility = classTeacherEligible.trim().toLowerCase();
+          if (normalizedEligibility && !['true', 'false', 'yes', 'no'].includes(normalizedEligibility)) {
+            rowErrors.push('Class Teacher Eligible must be true, false, yes, or no.');
+          }
+          teachingScope = {
+            institution: 'School',
+            teachingWing: teachingWing || undefined,
+            eligibleClasses: parseList(eligibleClasses),
+            skillTags: parseList(skillTags),
+            classTeacherEligible: ['true', 'yes'].includes(normalizedEligibility),
+          };
+        } else if (hasScopeValues && institutionType === 'College') {
+          const [scopeDepartment = '', teachingYears = '', specializations = ''] = scopeValues;
+          department = scopeDepartment || undefined;
+          teachingScope = {
+            institution: 'College',
+            department,
+            teachingYears: parseList(teachingYears),
+            specializations: parseList(specializations),
+          };
+        } else if (hasScopeValues && institutionType === 'Training') {
+          const [track = '', activeBatches = '', modules = ''] = scopeValues;
+          department = track || undefined;
+          teachingScope = {
+            institution: 'Training',
+            track: track || undefined,
+            activeBatches: parseList(activeBatches),
+            modules: parseList(modules),
+          };
+        }
+
         if (!staffId) rowErrors.push('Staff ID is required.');
         if (!name) rowErrors.push('Name is required.');
         if (!role) rowErrors.push('Role is required.');
@@ -127,8 +226,7 @@ export const BulkStaffUpload: React.FC<BulkStaffUploadProps> = ({
 
         const duplicateInCsv = lines.slice(1).some((otherLine, otherIdx) => {
           if (otherIdx === index) return false;
-          const otherRaw = otherLine.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || otherLine.split(',');
-          const otherStaffId = (otherRaw[0] || '').replace(/^"|"$/g, '').trim().toLowerCase();
+          const otherStaffId = (parseCsvLine(otherLine)[0] || '').trim().toLowerCase();
           return otherStaffId === normalizedStaffId;
         });
         if (duplicateInCsv) {
@@ -142,6 +240,8 @@ export const BulkStaffUpload: React.FC<BulkStaffUploadProps> = ({
             role,
             institution: institutionType,
             staffType: staffType as StaffInput['staffType'],
+            department,
+            teachingScope,
             qualification,
             email: email.toLowerCase(),
             mobile,
@@ -265,6 +365,12 @@ export const BulkStaffUpload: React.FC<BulkStaffUploadProps> = ({
                 <p className="mt-0.5 text-gray-500">
                   {row.data.department || '-'} • {row.data.role || '-'}
                 </p>
+                {row.data.teachingScope && (
+                  <p className="mt-1 text-[11px] text-gray-500">
+                    Teaching scope: {getScopeSummary(row.data.teachingScope) || 'No scope details'}
+                    {row.data.teachingScope.institution === 'School' && row.data.teachingScope.classTeacherEligible && ' • Class teacher eligible'}
+                  </p>
+                )}
                 <p className="mt-1 text-[11px] text-gray-500">
                   {row.errors.length ? row.errors.join(' • ') : 'Ready to import'}
                 </p>

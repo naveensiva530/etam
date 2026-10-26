@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useInstitution } from '@/context/InstitutionContext';
 import { getStaffApiError } from '@/features/staff/api';
-import { BloodGroupType, StaffInput, StaffRecord } from '@/features/shared';
+import { BloodGroupType, StaffInput, StaffRecord, StaffTeachingScope } from '@/features/shared';
 
 export type StaffFormMode = 'add' | 'edit';
 
@@ -57,6 +57,7 @@ export interface UseStaffFormReturn {
   mobile: string;
   dateOfJoining: string;
   status: StaffRecord['status'];
+  teachingScope: StaffTeachingScope;
 
   // field setters
   setStaffId: (v: string) => void;
@@ -68,6 +69,7 @@ export interface UseStaffFormReturn {
   setMobile: (v: string) => void;
   setDateOfJoining: (v: string) => void;
   setStatus: (v: StaffRecord['status']) => void;
+  setTeachingScope: (v: StaffTeachingScope) => void;
 
   // submit state
   errors: Record<string, string>;
@@ -84,6 +86,25 @@ function getDefaultRole(institutionType: string): string {
   if (institutionType === 'School') return 'Senior Teacher';
   if (institutionType === 'College') return 'Assistant Professor';
   return 'Lead Technical Mentor';
+}
+
+function buildDefaultTeachingScope(
+  institutionType: StaffRecord['institution'],
+  initialScope?: StaffTeachingScope,
+  fallbackDepartment?: string,
+): StaffTeachingScope {
+  if (initialScope?.institution === institutionType) {
+    return initialScope.institution === 'College'
+      ? { ...initialScope, department: initialScope.department ?? fallbackDepartment }
+      : initialScope;
+  }
+  if (institutionType === 'School') {
+    return { institution: 'School', eligibleClasses: [], skillTags: [], classTeacherEligible: false };
+  }
+  if (institutionType === 'College') {
+    return { institution: 'College', department: fallbackDepartment, teachingYears: [], specializations: [] };
+  }
+  return { institution: 'Training', activeBatches: [], modules: [] };
 }
 
 function buildDefaultForm(institutionType: string, initialStaff?: StaffRecord) {
@@ -120,6 +141,9 @@ export function useStaffForm({
   const [mobile, setMobile] = useState(defaultForm.mobile);
   const [dateOfJoining, setDateOfJoining] = useState(defaultForm.dateOfJoining);
   const [status, setStatus] = useState<StaffRecord['status']>(defaultForm.status);
+  const [teachingScope, setTeachingScope] = useState<StaffTeachingScope>(() =>
+    buildDefaultTeachingScope(institutionType as StaffRecord['institution'], initialStaff?.teachingScope, initialStaff?.department),
+  );
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -137,10 +161,13 @@ export function useStaffForm({
       setMobile(initialStaff.mobile);
       setDateOfJoining(initialStaff.dateOfJoining);
       setStatus(initialStaff.status);
+      setTeachingScope(buildDefaultTeachingScope(institutionType as StaffRecord['institution'], initialStaff.teachingScope, initialStaff.department));
       setErrors({});
       setSubmitError('');
+    } else {
+      setTeachingScope(buildDefaultTeachingScope(institutionType as StaffRecord['institution']));
     }
-  }, [initialStaff]);
+  }, [initialStaff, institutionType]);
 
   const clearFieldError = useCallback((field: string) => {
     setErrors((prev) => {
@@ -229,7 +256,10 @@ export function useStaffForm({
         role: role.trim(),
         institution: institutionType,
         staffType: staffType.trim() as StaffInput['staffType'],
-        department: initialStaff?.department,
+        department: teachingScope.institution === 'College'
+          ? teachingScope.department || initialStaff?.department
+          : initialStaff?.department,
+        teachingScope,
         qualification: qualification.trim(),
         email: email.trim().toLowerCase(),
         mobile: mobile.trim(),
@@ -259,6 +289,7 @@ export function useStaffForm({
     setMobile(fresh.mobile);
     setDateOfJoining(fresh.dateOfJoining);
     setStatus(fresh.status);
+    setTeachingScope(buildDefaultTeachingScope(institutionType as StaffRecord['institution'], initialStaff?.teachingScope, initialStaff?.department));
     setErrors({});
     setSubmitError('');
   }, [institutionType, initialStaff]);
@@ -273,6 +304,7 @@ export function useStaffForm({
     mobile,
     dateOfJoining,
     status,
+    teachingScope,
 
     setStaffId,
     setName,
@@ -283,6 +315,7 @@ export function useStaffForm({
     setMobile,
     setDateOfJoining,
     setStatus,
+    setTeachingScope,
 
     errors,
     clearFieldError,

@@ -117,3 +117,25 @@ exports.saveRoles = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.listSkills = async (req, res, next) => {
+  try {
+    const skills = await staffService.getStaffSkills(req.auth.userId, req.query.institution);
+    res.json({ data: skills });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.saveSkills = async (req, res, next) => {
+  try {
+    const skills = await staffService.saveStaffSkills(
+      req.auth.userId,
+      req.body.institution,
+      req.body.skills,
+    );
+    res.json({ data: skills });
+  } catch (error) {
+    next(error);
+  }
+};

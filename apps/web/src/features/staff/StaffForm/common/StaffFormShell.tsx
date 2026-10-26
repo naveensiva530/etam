@@ -5,7 +5,9 @@ import { useStaffForm, StaffFormMode } from '../../hooks/useStaffForm';
 import { StaffFieldsGrid } from '../../components/StaffFieldsGrid';
 import { usePhotoUpload } from '@/features/students/hooks/usePhotoUpload';
 import { useStaffRoles } from '../../hooks/useStaffRoles';
+import { useStaffSkills } from '../../hooks/useStaffSkills';
 import { RoleManager } from '../../components/RoleManager';
+import { SkillManager } from '../../components/SkillManager';
 
 const BulkStaffUpload = React.lazy(
   () => import('./BulkStaffUpload').then((m) => ({ default: m.BulkStaffUpload })),
@@ -53,6 +55,7 @@ export const StaffFormShell: React.FC<StaffFormShellProps> = ({
   });
 
   const staffRoles = useStaffRoles();
+  const staffSkills = useStaffSkills();
   const photo = usePhotoUpload(initialStaff?.photoUrl ?? '');
   const handleSubmit = (event: React.FormEvent) =>
     form.handleSubmitSingle(event, photo.photoUrl);
@@ -62,6 +65,33 @@ export const StaffFormShell: React.FC<StaffFormShellProps> = ({
       form.setRole('');
       form.clearFieldError('role');
     }
+  };
+  const updateSelectedSkill = (oldSkill: string, newSkill?: string) => {
+    const scope = form.teachingScope;
+    if (scope.institution === 'School') {
+      form.setTeachingScope({
+        ...scope,
+        skillTags: scope.skillTags.flatMap((skill) => skill === oldSkill ? (newSkill ? [newSkill] : []) : [skill]),
+      });
+    } else if (scope.institution === 'College') {
+      form.setTeachingScope({
+        ...scope,
+        specializations: scope.specializations.flatMap((skill) => skill === oldSkill ? (newSkill ? [newSkill] : []) : [skill]),
+      });
+    } else {
+      form.setTeachingScope({
+        ...scope,
+        modules: scope.modules.flatMap((skill) => skill === oldSkill ? (newSkill ? [newSkill] : []) : [skill]),
+      });
+    }
+  };
+  const handleRenameSkill = async (skill: string, newSkill: string) => {
+    const renamed = await staffSkills.renameSkill(skill, newSkill);
+    if (renamed) updateSelectedSkill(skill, newSkill.trim());
+    return renamed;
+  };
+  const handleRemoveSkill = async (skill: string) => {
+    if (await staffSkills.removeSkill(skill)) updateSelectedSkill(skill);
   };
 
   // ── Guard ──────────────────────────────────────────────────────────────────
@@ -81,11 +111,10 @@ export const StaffFormShell: React.FC<StaffFormShellProps> = ({
         }
       >
         <div
-          className={`bg-white dark:bg-zinc-900 w-full flex flex-col overflow-hidden ${
-            inline
+          className={`bg-white dark:bg-zinc-900 w-full flex flex-col overflow-hidden ${inline
               ? 'shadow-xs'
               : 'border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-4xl max-h-[92vh] shadow-2xl my-6'
-          }`}
+            }`}
         >
           {/* ── Header ──────────────────────────────────────────────────── */}
           <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between bg-white dark:bg-zinc-900">
@@ -136,11 +165,10 @@ export const StaffFormShell: React.FC<StaffFormShellProps> = ({
                   key={key}
                   type="button"
                   onClick={() => setUploadMode(key)}
-                  className={`pb-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 ${
-                    uploadMode === key
+                  className={`pb-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 ${uploadMode === key
                       ? 'border-gray-900 text-gray-900 dark:border-gray-100 dark:text-gray-100'
                       : 'border-transparent text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-                  }`}
+                    }`}
                 >
                   {icon} {label}
                 </button>
@@ -171,6 +199,7 @@ export const StaffFormShell: React.FC<StaffFormShellProps> = ({
                   mobile={form.mobile}
                   dateOfJoining={form.dateOfJoining}
                   status={form.status}
+                  teachingScope={form.teachingScope}
                   photoUrl={photo.photoUrl}
                   setStaffId={form.setStaffId}
                   setName={form.setName}
@@ -181,6 +210,7 @@ export const StaffFormShell: React.FC<StaffFormShellProps> = ({
                   setMobile={form.setMobile}
                   setDateOfJoining={form.setDateOfJoining}
                   setStatus={form.setStatus}
+                  setTeachingScope={form.setTeachingScope}
                   photoError={photo.photoError}
                   fileInputRef={photo.fileInputRef}
                   onPhotoUpload={photo.handlePhotoUpload}
@@ -190,6 +220,9 @@ export const StaffFormShell: React.FC<StaffFormShellProps> = ({
                   staffRoles={staffRoles.roles}
                   rolesLoading={staffRoles.loading}
                   onOpenRoleManager={staffRoles.openManager}
+                  staffSkills={staffSkills.skills}
+                  skillsLoading={staffSkills.loading}
+                  onOpenSkillManager={staffSkills.openManager}
                 />
 
                 {/* ── Form Actions ─────────────────────────────────────── */}
@@ -210,8 +243,8 @@ export const StaffFormShell: React.FC<StaffFormShellProps> = ({
                     {form.isSubmitting
                       ? 'Saving…'
                       : isEdit
-                      ? 'Save Changes'
-                      : 'Save & Onboard Staff'}
+                        ? 'Save Changes'
+                        : 'Save & Onboard Staff'}
                   </button>
                 </div>
               </form>
@@ -241,6 +274,19 @@ export const StaffFormShell: React.FC<StaffFormShellProps> = ({
         onRoleNameChange={staffRoles.setRoleNameInput}
         onAddRole={staffRoles.addRole}
         onRemoveRole={handleRemoveRole}
+      />
+      <SkillManager
+        isOpen={staffSkills.isManagerOpen}
+        onClose={staffSkills.closeManager}
+        skills={staffSkills.skills}
+        loading={staffSkills.loading}
+        saving={staffSkills.saving}
+        error={staffSkills.error}
+        skillNameInput={staffSkills.skillNameInput}
+        onSkillNameChange={staffSkills.setSkillNameInput}
+        onAddSkill={() => void staffSkills.addSkill()}
+        onRemoveSkill={(skill) => void handleRemoveSkill(skill)}
+        onRenameSkill={handleRenameSkill}
       />
     </>
   );

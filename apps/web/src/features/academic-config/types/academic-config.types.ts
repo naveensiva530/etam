@@ -12,8 +12,6 @@ export interface SectionSubject {
   code: string;
   name: string;
   type: SubjectType;
-  credits: number;
-  faculty?: string;
 }
 
 export interface AcademicConfigItem {
@@ -25,15 +23,6 @@ export interface AcademicConfigItem {
   sections: string[];
   createdAt: string;
   updatedAt?: string;
-}
-
-export interface SectionSubject {
-  id: string;
-  code: string;
-  name: string;
-  type: SubjectType;
-  credits: number;
-  faculty?: string;
 }
 
 export interface AcademicConfigAllocations {

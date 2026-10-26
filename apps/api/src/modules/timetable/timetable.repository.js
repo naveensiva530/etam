@@ -42,6 +42,7 @@ exports.getDepartmentsWithStatus = async (userId, institution) => {
     `SELECT id, academic_year, class_name, sub_category, status, sections
      FROM academic_configurations
      WHERE owner_user_id = ?
+       AND status = 'Active'
      ORDER BY class_name ASC, id ASC`,
     [userId]
   );
@@ -64,7 +65,7 @@ exports.getDepartmentsWithStatus = async (userId, institution) => {
     const parsedSections = typeof cfg.sections === 'string' ? JSON.parse(cfg.sections) : (cfg.sections || []);
     return {
       id: String(cfg.id),
-      departmentId: `N00${String(cfg.id).padStart(2, '0')}`,
+      departmentId: String(cfg.id).padStart(4, '0'),
       departmentName: cfg.sub_category && cfg.sub_category !== 'General'
         ? `${cfg.class_name} ${cfg.sub_category}`
         : cfg.class_name,

@@ -8,6 +8,8 @@ const router = express.Router();
 
 router.get('/roles', validation.validateRoleList, staffController.listRoles);
 router.put('/roles', validation.validateRoleSave, staffController.saveRoles);
+router.get('/skills', validation.validateSkillList, staffController.listSkills);
+router.put('/skills', validation.validateSkillSave, staffController.saveSkills);
 
 // ── Recycle bin ───────────────────────────────────────────────────────────────
 router.get('/archived',     validation.validateList, staffController.listArchived);

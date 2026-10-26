@@ -42,6 +42,27 @@ export type StudentInput = Omit<StudentRecord, 'id' | 'createdAt'>;
 
 export type StaffType = 'Teaching' | 'Non-Teaching' | 'Other';
 
+export type StaffTeachingScope =
+  | {
+      institution: 'School';
+      teachingWing?: string;
+      eligibleClasses: string[];
+      skillTags: string[];
+      classTeacherEligible: boolean;
+    }
+  | {
+      institution: 'College';
+      department?: string;
+      teachingYears: string[];
+      specializations: string[];
+    }
+  | {
+      institution: 'Training';
+      track?: string;
+      activeBatches: string[];
+      modules: string[];
+    };
+
 export interface StaffRecord {
   id: string;
   staffId: string;
@@ -50,6 +71,7 @@ export interface StaffRecord {
   institution: InstitutionType;
   staffType?: StaffType;
   department?: string;
+  teachingScope?: StaffTeachingScope;
   email: string;
   mobile: string;
   dateOfJoining: string;

@@ -74,3 +74,9 @@ exports.getStaffRoles = (userId, institution) =>
 
 exports.saveStaffRoles = (userId, institution, roles) =>
   staffRepository.saveRoles(userId, institution, roles);
+
+exports.getStaffSkills = (userId, institution) =>
+  staffRepository.getSkills(userId, institution);
+
+exports.saveStaffSkills = (userId, institution, skills) =>
+  staffRepository.saveSkills(userId, institution, skills);

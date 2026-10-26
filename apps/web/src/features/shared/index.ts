@@ -35,4 +35,5 @@ export type {
   StaffRecord,
   StaffInput,
   StaffType,
+  StaffTeachingScope,
 } from './types/common.types';

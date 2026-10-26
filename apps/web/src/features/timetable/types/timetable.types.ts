@@ -17,7 +17,7 @@ export const DAYS_OF_WEEK: DayOfWeek[] = [
 
 export interface DepartmentTimetableItem {
   id: string; // Academic Configuration ID
-  departmentId: string; // Formatted ID e.g. N0021
+  departmentId: string; // Real numeric class ID, e.g. 0001
   departmentName: string; // e.g. B.com 1st year, Bio-Technology 2nd year
   className: string;
   subCategory: string;

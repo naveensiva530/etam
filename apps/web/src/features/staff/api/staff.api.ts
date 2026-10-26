@@ -106,6 +106,24 @@ export async function saveStaffRoles(
   return response.data.data;
 }
 
+export async function getStaffSkills(institution: InstitutionType): Promise<string[] | null> {
+  const response = await api.get<ApiResponse<string[] | null>>('/staff/skills', {
+    params: { institution },
+  });
+  return response.data.data;
+}
+
+export async function saveStaffSkills(
+  institution: InstitutionType,
+  skills: string[],
+): Promise<string[]> {
+  const response = await api.put<ApiResponse<string[]>>('/staff/skills', {
+    institution,
+    skills,
+  });
+  return response.data.data;
+}
+
 // ── Error extractor ──────────────────────────────────────────────────────────
 export function getStaffApiError(error: unknown): string {
   if (axios.isAxiosError<{ message?: string; details?: Array<{ message: string }> }>(error)) {

@@ -15,6 +15,40 @@ const dateField = Joi.string().custom(validDate).messages({
   'any.invalid': 'Date must be a valid YYYY-MM-DD value.'
 });
 
+const uniqueStringList = Joi.array().items(Joi.string().trim().min(1).max(100)).max(100).unique(
+  (left, right) => left.toLowerCase() === right.toLowerCase(),
+);
+const teachingScopeSchema = Joi.alternatives().conditional('institution', [
+  {
+    is: 'School',
+    then: Joi.object({
+      institution: Joi.string().valid('School').required(),
+      teachingWing: Joi.string().trim().max(100).allow('').optional(),
+      eligibleClasses: uniqueStringList.required(),
+      skillTags: uniqueStringList.required(),
+      classTeacherEligible: Joi.boolean().required(),
+    }).unknown(false),
+  },
+  {
+    is: 'College',
+    then: Joi.object({
+      institution: Joi.string().valid('College').required(),
+      department: Joi.string().trim().max(150).allow('').optional(),
+      teachingYears: uniqueStringList.required(),
+      specializations: uniqueStringList.required(),
+    }).unknown(false),
+  },
+  {
+    is: 'Training',
+    then: Joi.object({
+      institution: Joi.string().valid('Training').required(),
+      track: Joi.string().trim().max(150).allow('').optional(),
+      activeBatches: uniqueStringList.required(),
+      modules: uniqueStringList.required(),
+    }).unknown(false),
+  },
+]);
+
 const staffSchema = Joi.object({
   staffId: Joi.string().trim().min(1).max(64).required(),
   name: Joi.string().trim().min(2).max(100).pattern(namePattern).required(),
@@ -22,6 +56,7 @@ const staffSchema = Joi.object({
   institution: Joi.string().valid('School', 'College', 'Training').required(),
   staffType: Joi.string().valid('Teaching', 'Non-Teaching', 'Other').required(),
   department: Joi.string().trim().min(1).max(150).allow('', null).optional(),
+  teachingScope: teachingScopeSchema.optional(),
   qualification: Joi.string().trim().min(1).max(150).required(),
   photoUrl: Joi.string().max(3_000_000).allow('', null).optional(),
   email: Joi.string().email().trim().max(150).required(),
@@ -57,15 +92,22 @@ module.exports = {
       (left, right) => left.toLowerCase() === right.toLowerCase(),
     ).required(),
   }).unknown(false), 'body'),
+  validateSkillList: validate(Joi.object({
+    institution: Joi.string().valid('School', 'College', 'Training').required(),
+  }).unknown(false), 'query'),
+  validateSkillSave: validate(Joi.object({
+    institution: Joi.string().valid('School', 'College', 'Training').required(),
+    skills: uniqueStringList.required(),
+  }).unknown(false), 'body'),
   validateCreate: validate(staffSchema, 'body'),
   validateBulk: validate(Joi.object({
     staffList: Joi.array().items(staffSchema).min(1).max(500).required()
   }).unknown(false), 'body'),
   validateList: validate(Joi.object({
     institution: Joi.string().valid('School', 'College', 'Training').optional(),
-    page:        Joi.number().integer().min(1).default(1),
-    limit:       Joi.number().integer().min(1).max(200).default(50),
-    search:      Joi.string().trim().max(100).allow('').optional(),
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(200).default(50),
+    search: Joi.string().trim().max(100).allow('').optional(),
   }).unknown(false), 'query'),
   validateId: validate(Joi.object({
     id: Joi.string().pattern(/^[1-9]\d{0,19}$/).required()

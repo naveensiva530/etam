@@ -117,8 +117,6 @@ export const AllocationView: React.FC<AllocationViewProps> = ({
   const [isSingleSubjectFormOpen, setIsSingleSubjectFormOpen] = useState(false);
   const [subTargetSection, setSubTargetSection] = useState<string>('all');
   const [selectedMasterSubjectId, setSelectedMasterSubjectId] = useState('');
-  const [subCredits, setSubCredits] = useState(4);
-  const [subFaculty, setSubFaculty] = useState('');
   const [subError, setSubError] = useState('');
 
   // ── Bulk subject assignment form ──
@@ -126,8 +124,6 @@ export const AllocationView: React.FC<AllocationViewProps> = ({
   const [bulkTargetSection, setBulkTargetSection] = useState<string>('all');
   const [bulkSubjectSearch, setBulkSubjectSearch] = useState('');
   const [selectedMasterSubjectIds, setSelectedMasterSubjectIds] = useState<string[]>([]);
-  const [bulkCredits, setBulkCredits] = useState(4);
-  const [bulkFaculty, setBulkFaculty] = useState('');
   const [bulkUploadError, setBulkUploadError] = useState('');
 
   // ── Effects ───────────────────────────────────────────────────────────────
@@ -452,8 +448,6 @@ export const AllocationView: React.FC<AllocationViewProps> = ({
       code: subject.code,
       name: subject.name,
       type: subject.type,
-      credits: Number(subCredits) || 3,
-      faculty: subFaculty.trim() || 'Assigned Faculty',
     };
     const updatedMap = { ...sectionSubjectsMap };
     const targetSections = subTargetSection === 'all' ? selectedConfig.sections : [subTargetSection];
@@ -475,8 +469,6 @@ export const AllocationView: React.FC<AllocationViewProps> = ({
     }
     setIsSingleSubjectFormOpen(false);
     setSelectedMasterSubjectId('');
-    setSubCredits(4);
-    setSubFaculty('');
     setSubError('');
     showToast(subTargetSection === 'all' ? `Subject allocated to all ${targetSections.length} sections!` : `Subject allocated to ${subTargetSection}!`);
   };
@@ -493,8 +485,6 @@ export const AllocationView: React.FC<AllocationViewProps> = ({
       code: subject.code,
       name: subject.name,
       type: subject.type,
-      credits: Number(bulkCredits) || 3,
-      faculty: bulkFaculty.trim() || 'Assigned Faculty',
     }));
     const updatedMap = { ...sectionSubjectsMap };
     targetSections.forEach((sec) => {
@@ -515,8 +505,6 @@ export const AllocationView: React.FC<AllocationViewProps> = ({
     setIsBulkUploadOpen(false);
     setSelectedMasterSubjectIds([]);
     setBulkSubjectSearch('');
-    setBulkCredits(4);
-    setBulkFaculty('');
     setBulkUploadError('');
     showToast(bulkTargetSection === 'all' ? `Bulk uploaded ${newSubjects.length} subjects to all sections!` : `Bulk uploaded ${newSubjects.length} subjects to ${bulkTargetSection}!`);
   };
@@ -760,12 +748,12 @@ export const AllocationView: React.FC<AllocationViewProps> = ({
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <button type="button" disabled={selectedConfig.sections.length === 0}
-                onClick={() => { setSubTargetSection('all'); setSelectedSectionForSubject('all'); setSelectedMasterSubjectId(''); setSubCredits(4); setSubFaculty(''); setSubError(''); setIsSingleSubjectFormOpen(true); setIsBulkUploadOpen(false); }}
+                onClick={() => { setSubTargetSection('all'); setSelectedSectionForSubject('all'); setSelectedMasterSubjectId(''); setSubError(''); setIsSingleSubjectFormOpen(true); setIsBulkUploadOpen(false); }}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 disabled:opacity-50 disabled:cursor-not-allowed">
                 <Plus className="w-3.5 h-3.5" /> Subject Assign
               </button>
               <button type="button" disabled={selectedConfig.sections.length === 0}
-                onClick={() => { setBulkTargetSection('all'); setSelectedSectionForSubject('all'); setSelectedMasterSubjectIds([]); setBulkSubjectSearch(''); setBulkCredits(4); setBulkFaculty(''); setBulkUploadError(''); setIsBulkUploadOpen(true); setIsSingleSubjectFormOpen(false); }}
+                onClick={() => { setBulkTargetSection('all'); setSelectedSectionForSubject('all'); setSelectedMasterSubjectIds([]); setBulkSubjectSearch(''); setBulkUploadError(''); setIsBulkUploadOpen(true); setIsSingleSubjectFormOpen(false); }}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 hover:opacity-90 shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed">
                 <Upload className="w-3.5 h-3.5" /> Bulk Upload
               </button>
@@ -838,31 +826,6 @@ export const AllocationView: React.FC<AllocationViewProps> = ({
                         No active Subject Master subjects are available for the selected section(s).
                       </p>
                     )}
-                  </div>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div>
-                      <label htmlFor="single-subject-credits" className="mb-1 block text-xs font-semibold">Credits</label>
-                      <input
-                        id="single-subject-credits"
-                        type="number"
-                        min={1}
-                        max={10}
-                        value={subCredits}
-                        onChange={(event) => setSubCredits(Number(event.target.value))}
-                        className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-xs dark:border-zinc-700 dark:bg-zinc-950"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="single-subject-faculty" className="mb-1 block text-xs font-semibold">Faculty</label>
-                      <input
-                        id="single-subject-faculty"
-                        type="text"
-                        value={subFaculty}
-                        onChange={(event) => setSubFaculty(event.target.value)}
-                        placeholder="Assigned Faculty / Teacher"
-                        className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-xs dark:border-zinc-700 dark:bg-zinc-950"
-                      />
-                    </div>
                   </div>
                   {subError && <p role="alert" className="text-xs text-rose-500">{subError}</p>}
                   <div className="flex justify-end gap-2 border-t border-zinc-100 pt-3 dark:border-zinc-800">
@@ -953,31 +916,6 @@ export const AllocationView: React.FC<AllocationViewProps> = ({
                     <p className="mt-1.5 text-[11px] text-zinc-500">
                       {selectedMasterSubjectIds.length} selected
                     </p>
-                  </div>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div>
-                      <label htmlFor="bulk-subject-credits" className="mb-1 block text-xs font-semibold">Credits</label>
-                      <input
-                        id="bulk-subject-credits"
-                        type="number"
-                        min={1}
-                        max={10}
-                        value={bulkCredits}
-                        onChange={(event) => setBulkCredits(Number(event.target.value))}
-                        className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-xs dark:border-zinc-700 dark:bg-zinc-950"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="bulk-subject-faculty" className="mb-1 block text-xs font-semibold">Faculty</label>
-                      <input
-                        id="bulk-subject-faculty"
-                        type="text"
-                        value={bulkFaculty}
-                        onChange={(event) => setBulkFaculty(event.target.value)}
-                        placeholder="Assigned Faculty / Teacher"
-                        className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-xs dark:border-zinc-700 dark:bg-zinc-950"
-                      />
-                    </div>
                   </div>
                   {bulkUploadError && <p role="alert" className="text-xs text-rose-500">{bulkUploadError}</p>}
                   <div className="flex justify-end gap-2 border-t border-zinc-100 pt-3 dark:border-zinc-800">
